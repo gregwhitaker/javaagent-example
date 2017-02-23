@@ -16,26 +16,40 @@
 
 package example.javaagent;
 
+import example.javaagent.core.Property;
 import org.reflections.Reflections;
 import org.reflections.scanners.FieldAnnotationsScanner;
 import org.reflections.scanners.TypeAnnotationsScanner;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 
-import java.lang.annotation.Target;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.instrument.Instrumentation;
+import java.lang.reflect.Field;
+import java.util.Properties;
+import java.util.Set;
 
 public class Agent {
 
     public static void premain(String agentArgs, Instrumentation inst) {
+        System.out.println("Executing the premain in Agent");
+
+        final Properties properties = new Properties();
+        try (final InputStream stream = Agent.class.getResourceAsStream("foo.properties")) {
+            properties.load(stream);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
         Reflections reflections = new Reflections(new ConfigurationBuilder()
                 .setUrls(ClasspathHelper.forPackage("example.javaagent"))
                 .setScanners(new TypeAnnotationsScanner(),
                         new FieldAnnotationsScanner()));
 
-        reflections.getFieldsAnnotatedWith(Target.class);
+        Set<Field> fields = reflections.getFieldsAnnotatedWith(Property.class);
 
-        System.out.println("This is the premain!");
+        System.out.println("Agent premain executed!");
     }
 
 }
