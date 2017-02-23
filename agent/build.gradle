@@ -1,0 +1,19 @@
+plugins {
+    id 'java'
+    id 'com.github.johnrengelman.shadow' version '1.2.4'
+}
+
+sourceCompatibility = 1.8
+
+dependencies {
+    compile project(":core")
+    compile 'org.ow2.asm:asm:4.1'
+    compile 'org.javassist:javassist:3.14.0-GA'
+    compile 'org.reflections:reflections:0.9.10'
+}
+
+jar {
+    manifest {
+        attributes 'Premain-Class': 'example.javaagent.Agent'
+    }
+}

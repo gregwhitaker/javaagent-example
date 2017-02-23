@@ -1,0 +1,13 @@
+plugins {
+    id 'application'
+    id 'java'
+    id 'com.github.johnrengelman.shadow' version '1.2.4'
+}
+
+sourceCompatibility = 1.8
+
+dependencies {
+    compile project(":core")
+}
+
+mainClassName = "example.javaagent.app.Main"
