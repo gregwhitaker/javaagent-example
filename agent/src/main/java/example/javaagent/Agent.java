@@ -29,7 +29,7 @@ public class Agent {
 
     public static void premain(String agentArgs, Instrumentation inst) {
         Reflections reflections = new Reflections(new ConfigurationBuilder()
-                .setUrls(ClasspathHelper.forPackage("javaagent.example"))
+                .setUrls(ClasspathHelper.forPackage("example.javaagent"))
                 .setScanners(new TypeAnnotationsScanner(),
                         new FieldAnnotationsScanner()));
 
