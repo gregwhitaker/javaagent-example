@@ -32,23 +32,27 @@ final class PropertyTransformer implements ClassFileTransformer {
                             ProtectionDomain protectionDomain,
                             byte[] bytes)
             throws IllegalClassFormatException {
-        ClassReader reader = new ClassReader(bytes);
-        ClassWriter writer = new ClassWriter(reader, 0);
-
-        ClassNode cn = new ClassNode();
-        reader.accept(cn, 0);
-
-        List<FieldNode> propertyFieldNodes = getPropertyFields(cn);
-        if (!propertyFieldNodes.isEmpty()) {
-            if (!isClassTransformed(cn)) {
-                for (FieldNode fn : getPropertyFields(cn)) {
-                    transformField(fn);
+        try {
+            ClassReader reader = new ClassReader(bytes);
+            ClassWriter writer = new ClassWriter(reader, 0);
+    
+            ClassNode cn = new ClassNode();
+            reader.accept(cn, 0);
+    
+            List<FieldNode> propertyFieldNodes = getPropertyFields(cn);
+            if (!propertyFieldNodes.isEmpty()) {
+                if (!isClassTransformed(cn)) {
+                    for (FieldNode fn : getPropertyFields(cn)) {
+                        transformField(fn);
+                    }
+            
+                    // cn.visibleAnnotations.add(new AnnotationNode(Type.getDescriptor(PropertyInstrumented.class)));
+            
+                    return writer.toByteArray();
                 }
-
-                cn.visibleAnnotations.add(new AnnotationNode(Type.getDescriptor(PropertyInstrumented.class)));
-
-                return writer.toByteArray();
             }
+        } catch (Throwable t) {
+            t.printStackTrace();
         }
 
         return bytes;
