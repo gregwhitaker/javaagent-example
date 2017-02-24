@@ -14,6 +14,11 @@ dependencies {
 
 jar {
     manifest {
-        attributes 'Premain-Class': 'example.javaagent.PropertyAgent'
+        attributes (
+                'Premain-Class': 'example.javaagent.PropertyAgent',
+                'Can-Redefine-Classes': true,
+                'Can-Retransform-Classes': true,
+                'Can-Set-Native-Method-Prefix': true
+        )
     }
 }
