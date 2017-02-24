@@ -21,7 +21,10 @@ import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtField;
 import javassist.NotFoundException;
+import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.agent.builder.AgentBuilder;
+import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.implementation.bytecode.Throw;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.ElementMatchers;
 import org.reflections.Reflections;
@@ -71,38 +74,82 @@ final class PropertyAgent {
                 fieldMap.get(clazz).add(f);
             }
         });
-
-        fieldMap
-            .entrySet()
-            .stream()
-            .flatMap(entry -> {
-                final Class<?> clazz = entry.getKey();
-                final Set<Field> value = entry.getValue();
-                
-                return value
-                    .stream()
-                    .map(field -> {
-                        /*System.out.println("class " + clazz.getName() + " - field - " + field.getName());
-                        
-                        return field;*/
-                        
-                             new AgentBuilder
-                                .Default()
-                            .type(ElementMatchers.named(clazz.getName()))
-                            .transform((builder, typeDescription, classLoader, module) -> {
-                                builder
-                                    .
-                            });
-                             
-                        return field;
-                    });
-                
-            })
-            .collect(Collectors.toList());
         
+        try {
+    
+            fieldMap
+                .entrySet()
+                .stream()
+                .flatMap(entry -> {
+                    final Class<?> clazz = entry.getKey();
+                    final Set<Field> value = entry.getValue();
+            
+                    return value
+                               .stream()
+                               .map(field -> {
+                        System.out.println("class " + clazz.getName() + " - field - " + field.getName());
+                        
+                        //return field;*/
+                    
+                                   Property annotation = field
+                                                             .getAnnotation(Property.class);
+                                   Object o = properties
+                                                  .get(annotation.value());
+                    
+                    
+                                   Class<?> type = field
+                                                       .getType();
+                    
+                                   new AgentBuilder
+                                           .Default()
+                                       .type(ElementMatchers.named(clazz.getName()))
+                                       .transform((builder, typeDescription, classLoader, module) -> {
+                                           DynamicType.Builder.FieldDefinition.Valuable<?> field1 = builder
+                                                                                                        .field(ElementMatchers.is(field));
+                            
+                                           if (type.isAssignableFrom(Integer.class)) {
+                                               field1.value((int) o);
+                                           } else if (type.isAssignableFrom(Long.class)) {
+                                               field1.value((long) o);
+                                           } else if (type.isAssignableFrom(Double.class)) {
+                                               field1.value((double) o);
+                                           } else if (type.isAssignableFrom(Boolean.class)) {
+                                               field1.value((boolean) o);
+                                           } else if (type.isAssignableFrom(Float.class)) {
+                                               field1.value((float) o);
+                                           } else if (type.isAssignableFrom(String.class)) {
+                                               field1.value((String) o);
+                                           }
+                            
+                                           return builder;
+                                       })
+                                       .installOn(inst);
+                    
+                    
+                                   return field;
+                               });
+            
+                })
+                .collect(Collectors.toList());
+    
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
         
         
         /*
+        ClassReloadingStrategy classReloadingStrategy = ClassReloadingStrategy
+                                                   .fromInstalledAgent();
+new ByteBuddy()
+  .redefine(Foo.class)
+  .method(named("getHello"))
+  .intercept(FixedValue.value("Byte Buddy!"))
+  .make()
+  .load(Foo.class.getClassLoader(), classReloadingStrategy);
+assertThat(foo.getHello(), is("Byte Buddy!"));
+classReloadingStrategy.reset(Foo.class);
+assertThat(foo.getHello(), is("Hello World"));
+        
         
         new AgentBuilder.Default()
                 .type(ElementMatchers.any())
