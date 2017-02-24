@@ -21,6 +21,9 @@ import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtField;
 import javassist.NotFoundException;
+import net.bytebuddy.agent.builder.AgentBuilder;
+import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.matcher.ElementMatchers;
 import org.reflections.Reflections;
 import org.reflections.scanners.FieldAnnotationsScanner;
 import org.reflections.scanners.TypeAnnotationsScanner;
@@ -36,6 +39,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 final class PropertyAgent {
 
@@ -68,6 +72,53 @@ final class PropertyAgent {
             }
         });
 
+        fieldMap
+            .entrySet()
+            .stream()
+            .flatMap(entry -> {
+                final Class<?> clazz = entry.getKey();
+                final Set<Field> value = entry.getValue();
+                
+                return value
+                    .stream()
+                    .map(field -> {
+                        /*System.out.println("class " + clazz.getName() + " - field - " + field.getName());
+                        
+                        return field;*/
+                        
+                             new AgentBuilder
+                                .Default()
+                            .type(ElementMatchers.named(clazz.getName()))
+                            .transform((builder, typeDescription, classLoader, module) -> {
+                                builder
+                                    .
+                            });
+                             
+                        return field;
+                    });
+                
+            })
+            .collect(Collectors.toList());
+        
+        
+        
+        /*
+        
+        new AgentBuilder.Default()
+                .type(ElementMatchers.any())
+                .transform((builder, typeDescription, classLoader, module) -> {
+                    return builder.field(ElementMatchers.anyOf(fields))
+                            .transform((instrumentedType, target) -> {
+                                System.out.println(target);
+                                return null;
+                            });
+                })
+                .installOn(inst);
+         */
+        
+        /*
+        
+        
         inst.addTransformer((classLoader, s, clazz, protectionDomain, bytes) -> {
             if (fieldMap.containsKey(clazz)) {
                 try {
@@ -91,7 +142,8 @@ final class PropertyAgent {
             }
 
             return null;
-        });
+        });*/
+        
 
         System.out.println("Agent premain executed!");
     }
