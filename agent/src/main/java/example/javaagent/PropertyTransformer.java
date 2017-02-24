@@ -38,18 +38,24 @@ final class PropertyTransformer implements ClassFileTransformer {
         ClassNode cn = new ClassNode();
         reader.accept(cn, 0);
 
-        if (!isClassTransformed(cn)) {
-            for (FieldNode fn : getPropertyFields(cn)) {
-                transformField(fn);
-            }
+        List<FieldNode> propertyFieldNodes = getPropertyFields(cn);
+        if (!propertyFieldNodes.isEmpty()) {
+            if (!isClassTransformed(cn)) {
+                for (FieldNode fn : getPropertyFields(cn)) {
+                    transformField(fn);
+                }
 
-            cn.visibleAnnotations.add(new AnnotationNode(Type.getDescriptor(PropertyInstrumented.class)));
+                cn.visibleAnnotations.add(new AnnotationNode(Type.getDescriptor(PropertyInstrumented.class)));
+
+                return writer.toByteArray();
+            }
         }
 
         return bytes;
     }
 
     private FieldNode transformField(FieldNode fn) {
+
         AnnotationNode an = getAnnotation(fn, Property.class);
 
         String propertyName = (String) getAnnotationAttribute(an, "value");
@@ -89,6 +95,8 @@ final class PropertyTransformer implements ClassFileTransformer {
             default:
                 throw new RuntimeException("Unable to find type for " + propertyValue);
         }
+
+        fn.visitEnd();
 
         return fn;
     }
