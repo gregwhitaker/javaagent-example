@@ -16,79 +16,33 @@
 
 package example.javaagent;
 
-import example.javaagent.core.Property;
-import net.bytebuddy.agent.builder.AgentBuilder;
-import net.bytebuddy.description.annotation.AnnotationDescription;
-import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.matcher.ElementMatcher;
-import net.bytebuddy.matcher.ElementMatchers;
-import net.bytebuddy.utility.JavaModule;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassWriter;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.instrument.Instrumentation;
-import java.security.ProtectionDomain;
 import java.util.Properties;
-import java.util.stream.Collectors;
 
 final class PropertyAgent {
     
     public static void premain(String agentArgs, Instrumentation inst) {
         System.out.println("Executing the premain in Agent");
-        
-        
+
         final Properties properties = new Properties();
         try (final InputStream stream = PropertyAgent.class.getClassLoader().getResourceAsStream("app.properties")) {
             properties.load(stream);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        
-        new AgentBuilder.Default()
-            .type(new AgentBuilder.RawMatcher() {
-                @Override
-                public boolean matches(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module, Class<?> classBeingRedefined, ProtectionDomain protectionDomain) {
-                    System.out.println("checking..." + typeDescription.getName());
-                    return typeDescription
-                               .getDeclaredFields()
-                               .parallelStream()
-                               .anyMatch(inDefinedShape ->
-                                             inDefinedShape
-                                                 .getDeclaredAnnotations()
-                                                 .parallelStream()
-                                                 .map(AnnotationDescription::getAnnotationType)
-                                                 .anyMatch(typeDefinitions -> typeDefinitions.isAssignableTo(Property.class))
-                               );
-                }
-            })
-            .transform((builder, typeDescription, classLoader, module) -> {
-                
-                /*git a
-                typeDescription
-                    .getDeclaredFields()
-                    .stream()
-                    .filter(inDefinedShape ->
-                                  inDefinedShape
-                                      .getDeclaredAnnotations()
-                                      .parallelStream()
-                                      .map(AnnotationDescription::getAnnotationType)
-                                      .anyMatch(typeDefinitions -> typeDefinitions.isAssignableTo(Property.class)))
-                    .forEach(inDefinedShape -> {
-                        inDefinedShape
-                            .getType()
-                            .getDeclaredAnnotations()
-                            .stream()
-                            .map(annotationDescription -> {
-                                annotationDescription.getValue()
-                            })
-                        builder
-                            .field(ElementMatchers.named(inDefinedShape.getName()))
-                            
-                    });*/
-                    
-                return builder;
-            })
-            .installOn(inst);
+
+        inst.addTransformer((classLoader, s, clazz, protectionDomain, bytes) -> {
+            ClassReader reader = new ClassReader(bytes);
+            ClassWriter writer = new ClassWriter(reader, 0);
+            PropertyAnnotationVisitor visitor = new PropertyAnnotationVisitor(writer);
+            reader.accept(visitor, 0);
+            return writer.toByteArray();
+        });
         
         System.out.println("Agent premain executed!");
     }
