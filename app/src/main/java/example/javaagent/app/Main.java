@@ -20,8 +20,9 @@ public class Main {
 
     public static void main(String... args) {
         System.out.println("App is running...");
-
+    
         ExampleBean example = new ExampleBean();
+        ExampleBean1 example2 = new ExampleBean1();
         System.out.println("example.javaagent.prop1 = " + example.stringProp);
         System.out.println("example.javaagent.prop2 = " + example.intProp);
         System.out.println("example.javaagent.prop3 = " + example.longProp);

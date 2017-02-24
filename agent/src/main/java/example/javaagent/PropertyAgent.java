@@ -17,78 +17,80 @@
 package example.javaagent;
 
 import example.javaagent.core.Property;
-import javassist.ClassPool;
-import javassist.CtClass;
-import javassist.CtField;
-import javassist.NotFoundException;
-import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.description.annotation.AnnotationDescription;
-import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.dynamic.DynamicType;
-import net.bytebuddy.implementation.bytecode.Throw;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.utility.JavaModule;
-import org.reflections.Reflections;
-import org.reflections.scanners.FieldAnnotationsScanner;
-import org.reflections.scanners.TypeAnnotationsScanner;
-import org.reflections.util.ClasspathHelper;
-import org.reflections.util.ConfigurationBuilder;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.instrument.ClassFileTransformer;
-import java.lang.instrument.IllegalClassFormatException;
 import java.lang.instrument.Instrumentation;
-import java.lang.reflect.Field;
 import java.security.ProtectionDomain;
-import java.util.*;
-import java.util.concurrent.CountDownLatch;
+import java.util.Properties;
 import java.util.stream.Collectors;
 
 final class PropertyAgent {
-
+    
     public static void premain(String agentArgs, Instrumentation inst) {
         System.out.println("Executing the premain in Agent");
-       
-       new AgentBuilder.Default()
-                .type(new AgentBuilder.RawMatcher() {
-                    @Override
-                    public boolean matches(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module, Class<?> classBeingRedefined, ProtectionDomain protectionDomain) {
-    
-                        return typeDescription
-                            .getDeclaredFields()
-                            .parallelStream()
-                            .anyMatch(inDefinedShape ->
-                                          inDefinedShape
-                                              .getDeclaredAnnotations()
-                                              .parallelStream()
-                                              .map(AnnotationDescription::getAnnotationType)
-                                              .anyMatch(typeDefinitions -> typeDefinitions.isAssignableTo(Property.class))
-                            );
-                        
-    /*
-    
-                        Arrays
-                            .asList(classBeingRedefined.getFields())
+        
+        
+        final Properties properties = new Properties();
+        try (final InputStream stream = PropertyAgent.class.getClassLoader().getResourceAsStream("app.properties")) {
+            properties.load(stream);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        
+        new AgentBuilder.Default()
+            .type(new AgentBuilder.RawMatcher() {
+                @Override
+                public boolean matches(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module, Class<?> classBeingRedefined, ProtectionDomain protectionDomain) {
+                    System.out.println("checking..." + typeDescription.getName());
+                    return typeDescription
+                               .getDeclaredFields()
+                               .parallelStream()
+                               .anyMatch(inDefinedShape ->
+                                             inDefinedShape
+                                                 .getDeclaredAnnotations()
+                                                 .parallelStream()
+                                                 .map(AnnotationDescription::getAnnotationType)
+                                                 .anyMatch(typeDefinitions -> typeDefinitions.isAssignableTo(Property.class))
+                               );
+                }
+            })
+            .transform((builder, typeDescription, classLoader, module) -> {
+                
+                /*git a
+                typeDescription
+                    .getDeclaredFields()
+                    .stream()
+                    .filter(inDefinedShape ->
+                                  inDefinedShape
+                                      .getDeclaredAnnotations()
+                                      .parallelStream()
+                                      .map(AnnotationDescription::getAnnotationType)
+                                      .anyMatch(typeDefinitions -> typeDefinitions.isAssignableTo(Property.class)))
+                    .forEach(inDefinedShape -> {
+                        inDefinedShape
+                            .getType()
+                            .getDeclaredAnnotations()
                             .stream()
-                            .filter(field -> field.getAnnotation(Property.class) != null)
-                            .forEach(field -> {
-                                System.out.println("fuck you byte buddy -> " + field.getName());
-                            });
-     */
-    
-                    }
-                })
-                .transform((builder, typeDescription, classLoader, module) -> {
-                    System.out.println("SLAYER");
-                    return builder;
-                })
-                .installOn(inst);
+                            .map(annotationDescription -> {
+                                annotationDescription.getValue()
+                            })
+                        builder
+                            .field(ElementMatchers.named(inDefinedShape.getName()))
+                            
+                    });*/
+                    
+                return builder;
+            })
+            .installOn(inst);
         
         System.out.println("Agent premain executed!");
     }
-
+    
 }
