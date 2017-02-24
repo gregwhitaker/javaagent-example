@@ -7,8 +7,8 @@ sourceCompatibility = 1.8
 
 dependencies {
     compile project(":core")
-    compile 'org.ow2.asm:asm:4.1'
-    compile 'org.javassist:javassist:3.14.0-GA'
+    compile 'net.bytebuddy:byte-buddy-agent:1.6.9'
+    compile 'net.bytebuddy:byte-buddy:1.6.9'
     compile 'org.reflections:reflections:0.9.10'
 }
 

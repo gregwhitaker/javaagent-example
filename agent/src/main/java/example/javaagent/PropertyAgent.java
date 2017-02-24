@@ -17,10 +17,13 @@
 package example.javaagent;
 
 import example.javaagent.core.Property;
-import javassist.ClassPool;
-import javassist.CtClass;
-import javassist.CtField;
-import javassist.NotFoundException;
+import net.bytebuddy.agent.builder.AgentBuilder;
+import net.bytebuddy.description.field.FieldDescription;
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.Transformer;
+import net.bytebuddy.matcher.ElementMatchers;
+import net.bytebuddy.utility.JavaModule;
 import org.reflections.Reflections;
 import org.reflections.scanners.FieldAnnotationsScanner;
 import org.reflections.scanners.TypeAnnotationsScanner;
@@ -31,9 +34,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Field;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.security.ProtectionDomain;
 import java.util.Properties;
 import java.util.Set;
 
@@ -54,46 +55,43 @@ final class PropertyAgent {
                 .setScanners(new TypeAnnotationsScanner(),
                         new FieldAnnotationsScanner()));
 
-        final Map<Class<?>, Set<Field>> fieldMap = new HashMap<>();
         final Set<Field> fields = reflections.getFieldsAnnotatedWith(Property.class);
 
-        fields.forEach(f -> {
-            Class<?> clazz = f.getDeclaringClass();
-            if (!fieldMap.containsKey(clazz)) {
-                Set<Field> clazzFields = new HashSet<>();
-                fields.add(f);
-                fieldMap.put(clazz, clazzFields);
-            } else {
-                fieldMap.get(clazz).add(f);
-            }
-        });
+        new AgentBuilder.Default()
+                .type(ElementMatchers.any())
+                .transform((builder, typeDescription, classLoader, module) -> {
+                    return builder.field(ElementMatchers.anyOf(fields))
+                            .transform((instrumentedType, target) -> {
+                                System.out.println(target);
+                                return null;
+                            });
+                })
+                .installOn(inst);
 
-        inst.addTransformer((classLoader, s, clazz, protectionDomain, bytes) -> {
-            if (fieldMap.containsKey(clazz)) {
-                try {
-                    ClassPool cp = ClassPool.getDefault();
-                    CtClass cc = cp.get(clazz.getName());
-
-                    fieldMap.get(clazz).forEach(f -> {
-                        try {
-                            CtField ctField = cc.getField(f.getName());
-                        } catch (NotFoundException e) {
-                            throw new RuntimeException("Error load-time weaving properties for class '" + clazz.getName() + "'");
-                        }
-                    });
-
-                    byte[] byteCode = cc.toBytecode();
-                    cc.detach();
-                    return byteCode;
-                } catch (Exception e) {
-                    throw new RuntimeException("Error load-time weaving properties for class '" + clazz.getName() + "'");
-                }
-            }
-
-            return null;
-        });
-
-        System.out.println("Agent premain executed!");
+//        inst.addTransformer((classLoader, s, clazz, protectionDomain, bytes) -> {
+//            if (fieldMap.containsKey(clazz)) {
+//                try {
+//                    ClassPool cp = ClassPool.getDefault();
+//                    CtClass cc = cp.get(clazz.getName());
+//
+//                    fieldMap.get(clazz).forEach(f -> {
+//                        try {
+//                            CtField ctField = cc.getField(f.getName());
+//                        } catch (NotFoundException e) {
+//                            throw new RuntimeException("Error load-time weaving properties for class '" + clazz.getName() + "'");
+//                        }
+//                    });
+//
+//                    byte[] byteCode = cc.toBytecode();
+//                    cc.detach();
+//                    return byteCode;
+//                } catch (Exception e) {
+//                    throw new RuntimeException("Error load-time weaving properties for class '" + clazz.getName() + "'");
+//                }
+//            }
+//
+//            return null;
+//        });
     }
 
 }
