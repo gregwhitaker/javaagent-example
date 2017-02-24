@@ -27,6 +27,7 @@ public class Main {
         System.out.println("example.javaagent.prop3 = " + example.longProp);
         System.out.println("example.javaagent.prop4 = " + example.doubleProp);
         System.out.println("example.javaagent.prop5 = " + example.floatProp);
+        System.out.println("example.javaagent.prop6 = " + example.booleanProp);
         System.out.println("nonAnnotatedProperty = " + example.nonAnnotatedProp);
     }
 

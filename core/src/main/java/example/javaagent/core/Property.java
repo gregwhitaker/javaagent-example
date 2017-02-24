@@ -25,6 +25,9 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 public @interface Property {
 
+    /**
+     * @return the name of the property
+     */
     String value();
 
 }

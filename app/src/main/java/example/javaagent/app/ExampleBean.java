@@ -35,6 +35,9 @@ public class ExampleBean {
     @Property("example.javaagent.prop5")
     public Float floatProp;
 
+    @Property("example.javaagent.prop6")
+    public boolean booleanProp;
+
     public String nonAnnotatedProp = "No annotation";
 
 }
