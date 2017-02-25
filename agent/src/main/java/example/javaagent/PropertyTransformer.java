@@ -5,9 +5,12 @@ import org.objectweb.asm.*;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.security.ProtectionDomain;
+import java.security.Signature;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+
+import static org.objectweb.asm.Opcodes.*;
 
 final class PropertyTransformer implements ClassFileTransformer {
     
@@ -114,42 +117,67 @@ final class PropertyTransformer implements ClassFileTransformer {
                             .forEach(fi -> {
                                 Type type = Type.getType(fi.desc);
                                 String propertyValue = props.getProperty(fi.propertyName);
-                                
+    
                                 Object value;
                                 switch (type.getSort()) {
                                     case Type.BOOLEAN:
                                         value = Boolean.valueOf(propertyValue);
+                                        addPrimativeField(mv, value, fi.name, fi.desc);
                                         break;
                                     case Type.BYTE:
                                         value = Byte.valueOf(propertyValue);
+                                        addPrimativeField(mv, value, fi.name, fi.desc);
                                         break;
                                     case Type.CHAR:
                                         value = propertyValue.charAt(0);
+                                        addPrimativeField(mv, value, fi.name, fi.desc);
                                         break;
                                     case Type.SHORT:
                                         value = Short.valueOf(propertyValue);
+                                        addPrimativeField(mv, value, fi.name, fi.desc);
                                         break;
                                     case Type.INT:
                                         value = Integer.valueOf(propertyValue);
+                                        addPrimativeField(mv, value, fi.name, fi.desc);
                                         break;
                                     case Type.LONG:
                                         value = Long.valueOf(propertyValue);
+                                        addPrimativeField(mv, value, fi.name, fi.desc);
                                         break;
                                     case Type.FLOAT:
                                         value = Float.valueOf(propertyValue);
+                                        addPrimativeField(mv, value, fi.name, fi.desc);
                                         break;
                                     case Type.DOUBLE:
                                         value = Double.valueOf(propertyValue);
+                                        addPrimativeField(mv, value, fi.name, fi.desc);
                                         break;
                                     case Type.ARRAY:
-                                    case Type.OBJECT:
                                         value = propertyValue;
+                                        addPrimativeField(mv, value, fi.name, fi.desc);
                                         break;
+                                    case Type.OBJECT: {
+                                        switch (fi.desc) {
+                                            case "Ljava/lang/String;":
+                                                addPrimativeField(mv, propertyValue, fi.name, fi.desc);
+                                                break;
+                                            case "Ljava/lang/Integer;":
+                                            case "Ljava/lang/Long;":
+                                            case "Ljava/lang/Double;":
+                                            case "Ljava/lang/Float;":
+                                            case "Ljava/lang/Short;":
+                                            case "Ljava/lang/Boolean;":
+                                                addBoxedField(mv, propertyValue, fi.name, fi.desc);
+                                                break;
+                                            default:
+                                                value = propertyValue;
+                                        }
+                                        break;
+                                    }
                                     default:
                                         throw new RuntimeException("Unable to find type for " + fi.desc);
                                 }
                                 
-                                addField(mv, value, fi.name, fi.desc);
                                 
                             });
                     }
@@ -160,12 +188,25 @@ final class PropertyTransformer implements ClassFileTransformer {
             return mv;
         }
         
-        private void addField(MethodVisitor mv, Object value, String name, String desc) {
+        private void addPrimativeField(MethodVisitor mv, Object value, String name, String desc) {
             Label ll = new Label();
             mv.visitLabel(ll);
-            mv.visitVarInsn(Opcodes.ALOAD, 0);
+            mv.visitVarInsn(ALOAD, 0);
             mv.visitLdcInsn(value);
             mv.visitFieldInsn(Opcodes.PUTFIELD, className, name, desc);
+        }
+        
+        private void addBoxedField(MethodVisitor mv, String value, String name, String desc) {
+            String classFieldName = desc.substring(1, desc.length() - 1);
+    
+            Label ll = new Label();
+            mv.visitLabel(ll);
+            mv.visitVarInsn(ALOAD, 0);
+            mv.visitTypeInsn(NEW, classFieldName);
+            mv.visitInsn(DUP);
+            mv.visitLdcInsn(value);
+            mv.visitMethodInsn(INVOKESPECIAL, classFieldName, "<init>", "(Ljava/lang/String;)V", false);
+            mv.visitFieldInsn(PUTFIELD, className, name, desc);
         }
          
     }

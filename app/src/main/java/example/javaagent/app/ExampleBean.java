@@ -23,16 +23,16 @@ public class ExampleBean {
     public String stringProp;
 
     @Property("example.javaagent.prop2")
-    public int intProp;
+    public Integer intProp;
     
     @Property("example.javaagent.prop3")
-    public long longProp;
+    public Long longProp;
     
     @Property("example.javaagent.prop4")
-    public double doubleProp;
+    public Double doubleProp;
 
     @Property("example.javaagent.prop5")
-    public float floatProp;
+    public Float floatProp;
 
     @Property("example.javaagent.prop6")
     public boolean booleanProp;
