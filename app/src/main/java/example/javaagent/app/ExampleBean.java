@@ -19,21 +19,20 @@ package example.javaagent.app;
 import example.javaagent.core.Property;
 
 public class ExampleBean {
-
     @Property("example.javaagent.prop1")
     public String stringProp;
 
     @Property("example.javaagent.prop2")
-    public Integer intProp;
-
+    public int intProp;
+    
     @Property("example.javaagent.prop3")
-    public Long longProp;
-
+    public long longProp;
+    
     @Property("example.javaagent.prop4")
-    public Double doubleProp;
+    public double doubleProp;
 
     @Property("example.javaagent.prop5")
-    public Float floatProp;
+    public float floatProp;
 
     @Property("example.javaagent.prop6")
     public boolean booleanProp;

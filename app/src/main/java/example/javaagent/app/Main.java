@@ -16,6 +16,8 @@
 
 package example.javaagent.app;
 
+import java.lang.annotation.Annotation;
+
 public class Main {
 
     public static void main(String... args) {
@@ -29,6 +31,11 @@ public class Main {
         System.out.println("example.javaagent.prop5 = " + example.floatProp);
         System.out.println("example.javaagent.prop6 = " + example.booleanProp);
         System.out.println("nonAnnotatedProperty = " + example.nonAnnotatedProp);
+    
+        Annotation[] declaredAnnotations = example
+                                               .getClass().getDeclaredAnnotations();
+    
+        System.out.println(declaredAnnotations.length);
     }
 
 }
