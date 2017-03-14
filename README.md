@@ -1,13 +1,12 @@
-javaagent-example
-===
+# javaagent-example
 
 Example of implementing a Java Agent to do bytecode manipulation at JVM startup.
 
-##Bugs and Feedback
+## Bugs and Feedback
 
 For bugs, questions and discussions please use the [Github Issues](https://github.com/gregwhitaker/javaagent-example/issues).
 
-##License
+## License
 Copyright 2017 Greg Whitaker
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
